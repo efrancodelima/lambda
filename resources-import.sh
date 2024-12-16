@@ -11,10 +11,6 @@ import_resource() {
   echo " "
 
   terraform import \
-  -var="aws_account_id=${ACCOUNT_ID}" \
-  -var="db_url=${DATASOURCE_URL}" \
-  -var="db_username=${DATASOURCE_USERNAME}" \
-  -var="db_password=${DATASOURCE_PASSWORD}" \
   "$resource_type.$resource_name" "$resource_id" \
   || echo "Erro ao importar o recurso, continuando..."
 }
