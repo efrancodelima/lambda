@@ -1,0 +1,10 @@
+backup/
+.terraform/
+.terraform*
+terraform*
+tfplan
+
+s1-create.sh
+s2-destroy.sh
+s3-recreate.sh
+s4-describe.sh
