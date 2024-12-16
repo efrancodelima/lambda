@@ -5,12 +5,6 @@ variable "aws_region" {
 }
 
 # VPC e subnets
-variable "vpc_id" {
-  description = "O id da VPC"
-  type = string
-  default = "vpc-0b651ac3c75c4bd48"
-}
-
 variable "private_subnet_ids" {
   description = "A lista com os ids das subnets privadas"
   type = list(string)
