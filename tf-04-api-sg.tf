@@ -1,6 +1,6 @@
 resource "aws_security_group" "tf_api_sg" {
   name        = "lanchonete-api-sg"
-  vpc_id      = var.vpc_id
+  vpc_id      = data.aws_vpc.tf_vpc.id
 
   ingress {
     from_port   = 8080
