@@ -1,43 +1,43 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  autentica
+Description: 'autentica
 
   Sample SAM Template for autentica
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+  '
 Globals:
   Function:
     Timeout: 3
-
 Resources:
   RequestLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: requests-layer
-      Description: Permite à lambda disparar requisições HTTP
-      ContentUri: layer/requests_layer.zip
+      Description: "Permite \xE0 lambda disparar requisi\xE7\xF5es HTTP"
+      ContentUri: s3://lambda-bucket-581642/62468a2839f07b8a5d5452e82b6814f5
       CompatibleRuntimes:
-        - python3.13
-
+      - python3.13
+    Metadata:
+      SamResourceId: RequestLayer
   HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
-      CodeUri: autentica/
+      CodeUri: s3://lambda-bucket-581642/a87b111671b2ea8ca29db568a22bdb49
       Handler: app.lambda_handler
       Runtime: python3.13
       Architectures:
-        - x86_64
+      - x86_64
       Role: arn:aws:iam::145023126233:role/service-role/teste-role-95clm2zn
       VpcConfig:
         SecurityGroupIds:
-          - sg-0c94e16b316022739 # Substitua pelo ID do seu Security Group
+        - sg-0c94e16b316022739
         SubnetIds:
-          - subnet-0af241860aeb1ef1d # private 1
-          - subnet-03fb8f366403fba19 # private 2
+        - subnet-0af241860aeb1ef1d
+        - subnet-03fb8f366403fba19
       Layers:
-        - !Ref RequestLayer
-
+      - Ref: RequestLayer
+    Metadata:
+      SamResourceId: HelloWorldFunction
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -45,13 +45,20 @@ Resources:
         Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
       ResourceQuery:
         Type: CLOUDFORMATION_STACK_1_0
+    Metadata:
+      SamResourceId: ApplicationResourceGroup
   ApplicationInsightsMonitoring:
     Type: AWS::ApplicationInsights::Application
     Properties:
       ResourceGroupName:
         Ref: ApplicationResourceGroup
-      AutoConfigurationEnabled: "true"
+      AutoConfigurationEnabled: 'true'
+    Metadata:
+      SamResourceId: ApplicationInsightsMonitoring
 Outputs:
   HelloWorldFunction:
     Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
+    Value:
+      Fn::GetAtt:
+      - HelloWorldFunction
+      - Arn
