@@ -6,8 +6,8 @@ resource "aws_apigatewayv2_authorizer" "tf_api_authorizer" {
   authorizer_type  = "JWT"
   
   jwt_configuration {
-    audience = [var.client_id]
-    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${var.user_pool_id}"
+    audience = [var.up_client_id]
+    issuer   = "https://cognito-idp.us-east-1.amazonaws.com/${var.user_pool_id}"
   }
   
   depends_on = [

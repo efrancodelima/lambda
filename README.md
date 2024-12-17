@@ -24,7 +24,7 @@ Link do projeto no GitHub:
     - [Modelo conceitual](#modelo-conceitual)
     - [Modelo lógico](#modelo-lógico)
 - [Infra kubernetes](#infra-kubernetes)
-- [Função lambda](#função-lambda)
+- [Autenticação](#Autenticação)
 
 ## Objetivos
 
@@ -196,7 +196,9 @@ Na tabela "itens_pedido" a chave primária é composta pelas chaves primárias d
 
 ## Infra kubernetes
 
-A infra está rodando em um cluster ECS. Esse cluster roda apenas em subnets privadas e não tem um IP público atribuído, sendo acessado por um API Gateway (que exige autenticação).
+A infra está rodando em um cluster ECS. O service do cluster aceita apenas requisições vindas do load balancer e o load balancer, por sua vez, é to tipo internal, ou seja, não é acessível fora da AWS. Além disso, toda a infra roda um subnets privadas.
+
+Em uma etapa posterior, criaremos um API Gateway para expor nossa aplicação, mas, por enquanto, o escopo desse repositório é apenas criar uma infraestrutura kubernetes dentro da AWS, sem acesso externo mesmo.
 
 Os recursos foram criados mais ou menos nessa ordem, respeitando as dependências entre eles (cláusula depends_on):
 
@@ -208,21 +210,46 @@ Os recursos foram criados mais ou menos nessa ordem, respeitando as dependência
 - a task definition;
 - o load balancer;
   - o target group do load balancer;
-  - o listener do load balancer;
-- o VPC link
+  - o listener do load balancer.
+
+Todos os recursos foram definidos com o Terraform, que tenta importar os recursos da AWS para a VM do GitHub Actions (que é onde a pipeline roda) antes de executar o "plan" e o "apply". Então, se o recurso não existe, ele cria; se já existe, ele atualiza.
+
+## Autenticação
+
+Essa é a quarta e última parte do projeto. É aqui que criamos o API Gateway para expor nossa aplicação para o mundo, para a internet. Esse API Gateway exige autenticação e, para que essa autenticação ocorra, outros recursos da AWS também serão integrados ao fluxo.
+
+O fluxo é o seguinte:
+
+- o usuário acessa o link para fazer a autenticação no Cognito;
+- o Cognito possui uma função serverless (lambda) do tipo pré autenticação, ou seja, ela é acionada após o usuário validar sua senha, mas antes do login ser concluído;
+- a lambda verifica, a partir do CPF do usuário, se ele está cadastrado como cliente no banco de dados da lanchonete;
+  - caso esteja: ok, o login é concluído com sucesso e o cliente é redirecionado;
+  - caso não esteja, a lambda lança uma exceção e o login falha, sendo exibida uma mensagem para o usuário como "CPF não encontrado", "O usuário não é cliente da rede" ou outra qualquer que o PO preferir.
+
+Há duas formas para a lambda acessar o banco de dados:
+
+- ela pode criar uma nova conexão e disparar uma consulta SQL ou;
+- pode consumir um endpoint da aplicação, pois a aplicação já possui um endpoint para buscar cliente pelo CPF.
+
+Embora a aplicação não seja acessível externamente antes do login ser concluído, ela é acessível à lambda a qualquer tempo, pois tanto a lambda quanto o load balancer são recursos internos da AWS e rodam na mesma VPC. Quando a lambda acessa o load balancer, ela não precisa passar pelo API Gateway e fornecer o token de acesso.
+
+A vantagem de acessar diretamente o banco de dados é que economiza recursos, vai direto buscar o dado onde precisa, pulando uma chamada intermediária. A desvantagem é ter que reescrever um código que já existe em outro lugar, ter que declarar novamente a URL, a porta de conexão, o database, o usuário e a senha; e depois colocar todos esses dados sensíveis em secrets ou variáveis de ambiente que a lambda possa capturar. Nós optamos pela solução de reutilizar o código que já existe.
+
+Como o Tech Challenge pedia para criar apenas o API GAteway e a lambda nesse repositório, o user pool foi criado pelo console web da AWS. Coloquei o id dele nas variáveis do terraform para referenciá-lo nos outros recursos quando necessário.
+
+Os recursos criados nessa etapa foram:
+
+- a função lambda (python);
+- o VPC link;
 - o API Gateway;
   - o stage do API Gateway;
   - a integration do API Gateway;
   - o authorizer do API Gateway;
   - a route do API Gateway.
 
-Todos os recursos foram definidos com o Terraform, que tenta importar os recursos da AWS para a VM do GitHub Actions (que é onde a pipeline roda) antes de executar o "plan" e o "apply". Então, se o recurso não existe, ele cria; se já existe, ele atualiza. Ao final da pipeline, ele imprime no console o link direto para a aplicação usando um output do terraform.
-
-## Função lambda
-
-Essa função é acionada durante o login do usuário e verifica se o CPF do usuário está cadastrado no banco de dados. Se estiver: ok, login realizado com sucesso; se não estiver é exibida uma mensagem informando o erro da falha no login.
-
 Cadastrei 2 usuários de exemplo no user pool, o primeiro é cliente cadastrado no banco de dados da lanchonete e o segundo, não:
 
 - Usuário: carlos | Senha: Teste@123
 - Usuário: helena | Senha: Teste@123
+
+O Carlos consegue logar com sucesso, a Helena não, pois, embora ela tenha se cadastrado no user pool (utilizou o sign-up na tela do Cognito), o CPF dela não consta na base de dados da aplicação.

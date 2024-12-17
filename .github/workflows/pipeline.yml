@@ -33,11 +33,18 @@ jobs:
         run: terraform validate
 
       - name: Terraform Imports
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: ./resources-import.sh
         continue-on-error: true
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          terraform plan \
+          -var="aws_account_id=${AWS_ACCOUNT_ID}" \
+          -out=tfplan
 
       - name: Terraform Apply
         run: terraform apply "tfplan"
@@ -48,7 +55,17 @@ jobs:
       - name: Install AWS SAM CLI
         uses: aws-actions/setup-sam@v2
 
-      # - name: Build and Deploy
-      #   run: |
-      #     sam build --use-container
-      #     sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+      - name: Validar a lambda
+        run: |
+          cd lambda
+          sam validate
+
+      - name: Empacotar a lambda
+        run: |
+          cd lambda
+          sam package --output-template-file packaged.yaml --s3-bucket lambda-bucket-581642
+
+      - name: Fazer o deploy da lambda
+        run: |
+          cd lambda
+          sam deploy --template-file template.yaml --stack-name lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
