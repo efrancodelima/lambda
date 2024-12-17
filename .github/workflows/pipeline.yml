@@ -33,11 +33,18 @@ jobs:
         run: terraform validate
 
       - name: Terraform Imports
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: ./resources-import.sh
         continue-on-error: true
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          terraform plan \
+          -var="aws_account_id=${AWS_ACCOUNT_ID}" \
+          -out=tfplan
 
       - name: Terraform Apply
         run: terraform apply "tfplan"
