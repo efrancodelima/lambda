@@ -63,7 +63,7 @@ jobs:
       - name: Empacotar a lambda
         run: |
           cd lambda
-          sam package --output-template-file packaged.yaml --s3-bucket lambda-bucket-581642
+          sam package --output-template-file template.yaml --s3-bucket lambda-bucket-581642
 
       - name: Fazer o deploy da lambda
         run: |
