@@ -239,9 +239,11 @@ Como o Tech Challenge pedia para criar apenas o API GAteway e a lambda nesse rep
 
 Os recursos criados nessa etapa foram:
 
-- a função lambda (python);
+- a função lambda (em python);
+  - a layer requests (para a lambda poder fazer requisições)
 - o VPC link;
 - o API Gateway;
+  - o security group do API Gateway;
   - o stage do API Gateway;
   - a integration do API Gateway;
   - o authorizer do API Gateway;
