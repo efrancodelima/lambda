@@ -226,9 +226,14 @@ O fluxo é o seguinte:
   - caso esteja: ok, o login é concluído com sucesso e o cliente é redirecionado;
   - caso não esteja, a lambda lança uma exceção e o login falha, sendo exibida uma mensagem para o usuário como "CPF não encontrado", "O usuário não é cliente da rede" ou outra qualquer que o PO preferir.
 
-Há duas formas para a lambda acessar o banco de dados: ela pode criar uma nova conexão e disparar uma consulta SQL ou pode consumir um endpoint da aplicação, pois a aplicação já possui um endpoint para buscar cliente pelo CPF. Embora a aplicação não seja acessível externamente antes do login ser concluído, ela é acessível ao lambda a qualquer tempo, pois tanto o lambda quanto o load balancer são recursos internos da AWS e rodam na mesma VPC. Quando a lambda acessa o load balancer, ela não precisa passa pelo API Gateway e fornecer o token de acesso.
+Há duas formas para a lambda acessar o banco de dados:
 
-A vantagem de acessar diretamente o banco de dados é que economiza recursos, vai direto buscar o dado onde precisa, pulando uma chamda intermediária. A desvantagem é ter que reescrever um código que já existe em outro lugar, ter que declarar novamente a URL, a porta de conexão, o database, o usuário e a senha... enfim, e depois colocar todos esses dados sensíveis em secrets ou variáveis de ambiente que a lambda possa capturar. Resumindo: optamos pela solução de reutilizar o código que já existe.
+- ela pode criar uma nova conexão e disparar uma consulta SQL ou;
+- pode consumir um endpoint da aplicação, pois a aplicação já possui um endpoint para buscar cliente pelo CPF.
+
+Embora a aplicação não seja acessível externamente antes do login ser concluído, ela é acessível à lambda a qualquer tempo, pois tanto a lambda quanto o load balancer são recursos internos da AWS e rodam na mesma VPC. Quando a lambda acessa o load balancer, ela não precisa passar pelo API Gateway e fornecer o token de acesso.
+
+A vantagem de acessar diretamente o banco de dados é que economiza recursos, vai direto buscar o dado onde precisa, pulando uma chamada intermediária. A desvantagem é ter que reescrever um código que já existe em outro lugar, ter que declarar novamente a URL, a porta de conexão, o database, o usuário e a senha; e depois colocar todos esses dados sensíveis em secrets ou variáveis de ambiente que a lambda possa capturar. Nós optamos pela solução de reutilizar o código que já existe.
 
 Como o Tech Challenge pedia para criar apenas o API GAteway e a lambda nesse repositório, o user pool foi criado pelo console web da AWS. Coloquei o id dele nas variáveis do terraform para referenciá-lo nos outros recursos quando necessário.
 
