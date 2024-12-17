@@ -56,13 +56,16 @@ jobs:
         uses: aws-actions/setup-sam@v2
 
       - name: Validar a lambda
-        run: sam validate
-
-      - name: Fazer o build da lambda
-        run: sam build
+        run: |
+          cd lambda
+          sam validate
 
       - name: Empacotar a lambda
-        run: sam package --output-template-file packaged.yaml --s3-bucket lambda-bucket-581642
+        run: |
+          cd lambda
+          sam package --output-template-file packaged.yaml --s3-bucket lambda-bucket-581642
 
       - name: Fazer o deploy da lambda
-        run: sam deploy --template-file template.yaml --stack-name lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
+        run: |
+          cd lambda
+          sam deploy --template-file template.yaml --stack-name lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
