@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  autentica
+
+  Sample SAM Template for autentica
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  RequestLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: requests-layer
+      Description: Permite à lambda disparar requisições HTTP
+      ContentUri: layer/requests_layer.zip
+      CompatibleRuntimes:
+        - python3.13
+
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: autentica/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Role: arn:aws:iam::145023126233:role/service-role/teste-role-95clm2zn
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-0c94e16b316022739 # Substitua pelo ID do seu Security Group
+        SubnetIds:
+          - subnet-0af241860aeb1ef1d # private 1
+          - subnet-03fb8f366403fba19 # private 2
+      Layers:
+        - !Ref RequestLayer
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: "true"
+Outputs:
+  HelloWorldFunction:
+    Description: Hello World Lambda Function ARN
+    Value: !GetAtt HelloWorldFunction.Arn
